@@ -127,8 +127,13 @@ class QueueShell extends Shell {
 		if (function_exists('gc_enable')) {
 		    gc_enable();
 		}
-		pcntl_signal(SIGTERM, array(&$this, "_exit"));
-		$this->exit = false;
+
+		// Prevent mid-job termination (if platform supported)
+		if (function_exists('pcntl_signal')) {
+			pcntl_signal(SIGTERM, array(&$this, "_exit"));
+			$this->exit = false;
+		}
+
 		$starttime = time();
 		$group = null;
 		if (isset($this->params['group']) && !empty($this->params['group'])) {
