@@ -150,17 +150,23 @@ class QueueShell extends Shell {
 				if ($data !== false) {
 					$this->out('Running Job of type "' . $data['jobtype'] . '"');
 					$taskname = 'queue_' . strtolower($data['jobtype']);
-					$return = $this->{$taskname}->run(unserialize($data['data']));
-					if ($return == true) {
-						$this->QueuedTask->markJobDone($data['id']);
-						$this->out('Job Finished.');
+					$jobData = unserialize($data['data']);
+					if (!$this->{$taskname}->canRun($jobData)) {
+						$this->QueuedTask->requeueJob($data['id'], $this->getTaskConf($taskname, 'timeout'));
+						$this->out('Job could not be run, requeued.');
 					} else {
-						$failureMessage = null;
-						if (isset($this->{$taskname}->failureMessage) && !empty($this->{$taskname}->failureMessage)) {
-							$failureMessage = $this->{$taskname}->failureMessage;
+						$return = $this->{$taskname}->run($jobData);
+						if ($return == true) {
+							$this->QueuedTask->markJobDone($data['id']);
+							$this->out('Job Finished.');
+						} else {
+							$failureMessage = null;
+							if (isset($this->{$taskname}->failureMessage) && !empty($this->{$taskname}->failureMessage)) {
+								$failureMessage = $this->{$taskname}->failureMessage;
+							}
+							$this->QueuedTask->markJobFailed($data['id'], $failureMessage);
+							$this->out('Job did not finish, requeued.');
 						}
-						$this->QueuedTask->markJobFailed($data['id'], $failureMessage);
-						$this->out('Job did not finish, requeued.');
 					}
 				} elseif (Configure::read('queue.exitwhennothingtodo')) {
 					$this->out('nothing to do, exiting.');
@@ -227,7 +233,7 @@ class QueueShell extends Shell {
 	 * Returns a List of available QueueTasks and their individual configurations.
 	 * @return array
 	 */
-	private function getTaskConf() {
+	private function getTaskConf($taskname = null, $field = null) {
 		if (!is_array($this->taskConf)) {
 			$this->taskConf = array();
 			foreach ($this->tasks as $task) {
@@ -247,7 +253,13 @@ class QueueShell extends Shell {
 				}
 			}
 		}
-		return $this->taskConf;
+		if (is_null($taskname)) {
+			return $this->taskConf;
+		}
+		if (is_null($field)) {
+			return $this->taskConf[$taskname];
+		}
+		return $this->taskConf[$taskname][$field];
 	}
 /**
  * Output a list of available tasks.
