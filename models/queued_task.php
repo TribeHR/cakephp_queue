@@ -173,6 +173,23 @@ class QueuedTask extends AppModel {
 	}
 
 	/**
+	 * Requeue a job without incrementing its failure count. Used when a job could not be attempted.
+	 *
+	 * @param integer $id
+	 * @param integer $timeout Number of seconds to wait before trying this job again.
+	 */
+	public function requeueJob($id, $timeout) {
+		$db =& $this->getDataSource();
+		return ($this->updateAll(array(
+			'fetched' => null,
+			'workerkey' => null,
+			'notbefore' => 'DATE_ADD(NOW(), INTERVAL ' . intval($timeout) . ' SECOND)'
+		), array(
+			'id' => $id
+		)));
+	}
+
+	/**
 	 * Returns the number of items in the Queue.
 	 * Either returns the number of ALL pending tasks, or the number of pending tasks of the passed Type
 	 *
