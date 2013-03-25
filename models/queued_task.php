@@ -26,6 +26,7 @@ class QueuedTask extends AppModel {
 	 *
 	 * @param string $jobName QueueTask name
 	 * @param array $data any array
+	 * @param string $notBefore An interval string ('+5 seconds', etc) to delay the job's execution by
 	 * @param string $group Used to group similar QueuedTasks
 	 * @param string $reference any array
 	 * @return bool success
@@ -49,6 +50,7 @@ class QueuedTask extends AppModel {
 	 *
 	 * @param string $jobName QueueTask name
 	 * @param array $data any array
+	 * @param string $notBefore An interval string ('+5 seconds', etc) to delay the job's execution by
 	 * @param string $group Used to group similar QueuedTasks
 	 * @param string $reference any array
 	 * @return bool success
