@@ -26,6 +26,7 @@ class QueuedTask extends AppModel {
 	 *
 	 * @param string $jobName QueueTask name
 	 * @param array $data any array
+	 * @param string $notBefore An interval string ('+5 seconds', etc) to delay the job's execution by
 	 * @param string $group Used to group similar QueuedTasks
 	 * @param string $reference any array
 	 * @return bool success
@@ -42,6 +43,35 @@ class QueuedTask extends AppModel {
 			$data['notbefore'] = date('Y-m-d H:i:s', strtotime($notBefore));
 		}
 		return ($this->save($this->create($data)));
+	}
+
+	/**
+	 * Add a new Job to the Queue, unless an identical Job is awaiting execution.
+	 *
+	 * @param string $jobName QueueTask name
+	 * @param array $data any array
+	 * @param string $notBefore An interval string ('+5 seconds', etc) to delay the job's execution by
+	 * @param string $group Used to group similar QueuedTasks
+	 * @param string $reference any array
+	 * @return bool success
+	 */
+	public function createSingletonJob($jobName, $data, $notBefore = null, $group = null, $reference = null) {
+		$pendingInstances = $this->find('first', array(
+			'recursive' => -1,
+			'conditions' => array(
+				'jobtype' => $jobName,
+				'data' => serialize($data),
+				'group' => $group,
+				'completed' => null
+				)
+			));
+
+		// If an identical job is awaiting execution, don't add this one
+		if (!empty($pendingInstances)) {
+			return true;
+		}
+
+		return ($this->createJob($jobName, $data, $notBefore, $group, $reference));
 	}
 
 	public function onError() {
