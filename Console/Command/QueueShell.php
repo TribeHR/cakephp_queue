@@ -8,6 +8,9 @@ declare(ticks = 1);
  * @license http://www.opensource.org/licenses/mit-license.php The MIT License
  * @link http://github.com/MSeven/cakephp_queue
  */
+
+App::uses('Folder', 'Utility');
+
 class QueueShell extends Shell {
 	public $uses = array(
 		'Queue.QueuedTask'
@@ -32,9 +35,9 @@ class QueueShell extends Shell {
 		App::import('Folder');
 		$this->_loadModels();
 		
-		foreach ($this->Dispatch->shellPaths as $path) {
+		foreach (App::path('shells') as $path) {
 			$folder = new Folder($path . DS . 'tasks');
-			$this->tasks = array_merge($this->tasks, $folder->find('queue_.*\.php'));
+			$this->tasks = array_merge($this->tasks, $folder->find('Queue.*\.php'));
 		}
 		// strip the extension fom the found task(file)s
 		foreach ($this->tasks as &$task) {
