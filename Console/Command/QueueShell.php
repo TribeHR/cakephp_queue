@@ -13,7 +13,7 @@ App::uses('Folder', 'Utility');
 
 class QueueShell extends Shell {
 	public $uses = array(
-		'Queue.QueuedTask'
+		'CakephpQueue.QueuedTask'
 	);
 	/**
 	 * Codecomplete Hint
@@ -36,12 +36,12 @@ class QueueShell extends Shell {
 		$this->_loadModels();
 		
 		foreach (App::path('shells') as $path) {
-			$folder = new Folder($path . DS . 'tasks');
+			$folder = new Folder($path . DS . 'Task');
 			$this->tasks = array_merge($this->tasks, $folder->find('Queue.*\.php'));
 		}
 		// strip the extension fom the found task(file)s
 		foreach ($this->tasks as &$task) {
-			$task = basename($task, '.php');
+			$task = basename($task, 'Task.php');
 		}
 		
 		//Config can be overwritten via local app config.
