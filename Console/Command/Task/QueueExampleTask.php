@@ -19,7 +19,7 @@ class queueExampleTask extends Shell {
 	 * @var array
 	 */
 	public $uses = array(
-		'Queue.QueuedTask'
+		'CakephpQueue.QueuedTask'
 	);
 	
 	/**

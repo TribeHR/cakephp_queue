@@ -7,7 +7,7 @@
  * @link http://github.com/MSeven/cakephp_queue
  */
 
-App::import('Model', 'Queue.QueuedTask');
+App::import('Model', 'CakephpQueue.QueuedTask');
 
 class TestQueuedTask extends QueuedTask {
 	public $name = 'TestQueuedTask';
