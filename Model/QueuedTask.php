@@ -114,7 +114,7 @@ class QueuedTask extends AppModel {
 		// generate the task specific conditions.
 		foreach ($capabilities as $task) {
 			$tmp = array(
-				'jobtype' => str_replace('queue_', '', $task['name']),
+				'jobtype' => str_replace('queue', '', $task['name']),
 				'AND' => array(
 					array(
 						'OR' => array(
@@ -138,6 +138,7 @@ class QueuedTask extends AppModel {
 		}
 		// First, find a list of a few of the oldest unfinished tasks.
 		$data = $this->find('all', $findConf);
+
 		if (is_array($data) && count($data) > 0) {
 			// generate a list of their ID's
 			foreach ($data as $item) {

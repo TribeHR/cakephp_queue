@@ -8,9 +8,12 @@ declare(ticks = 1);
  * @license http://www.opensource.org/licenses/mit-license.php The MIT License
  * @link http://github.com/MSeven/cakephp_queue
  */
+
+App::uses('Folder', 'Utility');
+
 class QueueShell extends Shell {
 	public $uses = array(
-		'Queue.QueuedTask'
+		'CakephpQueue.QueuedTask'
 	);
 	/**
 	 * Codecomplete Hint
@@ -32,13 +35,13 @@ class QueueShell extends Shell {
 		App::import('Folder');
 		$this->_loadModels();
 		
-		foreach ($this->Dispatch->shellPaths as $path) {
-			$folder = new Folder($path . DS . 'tasks');
-			$this->tasks = array_merge($this->tasks, $folder->find('queue_.*\.php'));
+		foreach (App::path('shells') as $path) {
+			$folder = new Folder($path . DS . 'Task');
+			$this->tasks = array_merge($this->tasks, $folder->find('queue.*\.php'));
 		}
 		// strip the extension fom the found task(file)s
 		foreach ($this->tasks as &$task) {
-			$task = basename($task, '.php');
+			$task = basename($task, 'Task.php');
 		}
 		
 		//Config can be overwritten via local app config.
@@ -107,8 +110,8 @@ class QueueShell extends Shell {
 		} else {
 			if (in_array($this->args[0], $this->taskNames)) {
 				$this->{$this->args[0]}->add();
-			} elseif (in_array('queue_' . $this->args[0], $this->taskNames)) {
-				$this->{'queue_' . $this->args[0]}->add();
+			} elseif (in_array('queue' . $this->args[0], $this->taskNames)) {
+				$this->{'queue' . $this->args[0]}->add();
 			} else {
 				$this->out('Error:');
 				$this->out('       Task not found: ' . $this->args[0], 2);
@@ -149,7 +152,7 @@ class QueueShell extends Shell {
 			} else {
 				if ($data !== false) {
 					$this->out('Running Job of type "' . $data['jobtype'] . '"');
-					$taskname = 'queue_' . strtolower($data['jobtype']);
+					$taskname = 'queue' . $data['jobtype'];
 					$jobData = unserialize($data['data']);
 					if (!$this->{$taskname}->canRun($jobData)) {
 						$this->QueuedTask->requeueJob($data['id'], $this->getTaskConf($taskname, 'timeout'));

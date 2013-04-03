@@ -6,18 +6,18 @@ Usage:
  
 In some controller:
 
-var $uses = array('Queue.QueuedTask', 'Queue.QueuedTaskResponse');
+var $uses = array('CakephpQueue.QueuedTask', 'CakephpQueue.QueuedTaskResponse');
 
 function action() {
 	$key = $this->QueuedTaskResponse->generate();
-	$this->QueuedTask->createJob('some_task', array('response_key' => $key));
+	$this->QueuedTask->createJob('SomeTask', array('response_key' => $key));
 	$response = $this->QueuedTaskResponse->getValue($key, true);
 	$this->set('response', $response);
 }
 
 In your queue task:
 
-var $uses = array('Queue.QueuedTaskResponse');
+var $uses = array('CakephpQueue.QueuedTaskResponse');
 function run($data) {
 	$this->QueuedTaskResponse->setValue($data['response_key'], 'Return value');
 }
