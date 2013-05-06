@@ -56,13 +56,24 @@ class QueuedTask extends AppModel {
 	 * @return bool success
 	 */
 	public function createSingletonJob($jobName, $data, $notBefore = null, $group = null, $reference = null) {
+		// A job is already pending iff:
+		// - it is of the same type
+		// - it has not been completed
+		// - it has the exact same data signature
+		// - it has either not been fetched, or has not yet errored out
+		//      (any job that has been fetched and has errored is assumed to be failed, and valid to requeue)
+		//      (any job that has been fetched and is not completed/errored is in progress, and should not be requeued)
 		$pendingInstances = $this->find('first', array(
 			'recursive' => -1,
 			'conditions' => array(
 				'jobtype' => $jobName,
 				'data' => serialize($data),
 				'group' => $group,
-				'completed' => null
+				'completed' => null,
+				'or' => array(
+					'fetched' => null,
+					'failed' => 0,
+					)
 				)
 			));
 
