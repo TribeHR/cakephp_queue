@@ -214,7 +214,7 @@ class QueuedTask extends AppModel {
 		return ($this->updateAll(array(
 			'fetched' => null,
 			'workerkey' => null,
-			'notbefore' => 'DATE_ADD(NOW(), INTERVAL ' . intval($timeout) . ' SECOND)'
+			'notbefore' => "'". date('Y-m-d H:i:s', time() + $timeout) ."'"
 		), array(
 			'id' => $id
 		)));
