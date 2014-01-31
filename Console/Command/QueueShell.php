@@ -28,6 +28,22 @@ class QueueShell extends Shell {
 
 	private $exit;
 
+
+	function getOptionParser() {
+		$parser = parent::getOptionParser();
+
+		$parser->addOption(
+			'group',
+			array(
+				'short' => 'g',
+				'help' => 'Group for this queue to process.',
+				'required' => false
+				)
+			);
+
+		return $parser;
+	}
+
 	/**
 	 * Overwrite shell initialize to dynamically load all Queue Related Tasks.
 	 */
