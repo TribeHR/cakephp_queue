@@ -31,7 +31,7 @@ class QueuedTask extends AppModel {
 	 * @param string $reference any array
 	 * @return bool success
 	 */
-	public function createJob($jobName, $data, $notBefore = null, $group = null, $reference = null) {
+	public function createJob($jobName, $data, $notBefore = null, $group = 'default', $reference = null) {
 		
 		$data = array(
 			'jobtype' => $jobName,
@@ -55,7 +55,7 @@ class QueuedTask extends AppModel {
 	 * @param string $reference any array
 	 * @return bool success
 	 */
-	public function createSingletonJob($jobName, $data, $notBefore = null, $group = null, $reference = null) {
+	public function createSingletonJob($jobName, $data, $notBefore = null, $group = 'default', $reference = null) {
 		// A job is already pending iff:
 		// - it is of the same type
 		// - it has not been completed
@@ -97,7 +97,7 @@ class QueuedTask extends AppModel {
 	 * @param string $group Request a job from this group, (from any group if null)
 	 * @return Array Taskdata.
 	 */
-	public function requestJob($capabilities, $group = null) {
+	public function requestJob($capabilities, $group = 'default') {
 		$idlist = array();
 		$wasFetched = array();
 		
