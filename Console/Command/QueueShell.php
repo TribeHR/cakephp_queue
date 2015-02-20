@@ -49,7 +49,6 @@ class QueueShell extends Shell {
 	 */
 	public function initialize() {
 		App::import('Folder');
-		$this->_loadModels();
 		
 		foreach (App::path('shells') as $path) {
 			$folder = new Folder($path . DS . 'Task');
@@ -81,6 +80,8 @@ class QueueShell extends Shell {
 		if(isset($this->params['-verbose'])) {
 			$this->_verbose = true;
 		}
+
+		parent::initialize();
 	}
 
 	/**

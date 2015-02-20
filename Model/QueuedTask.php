@@ -168,7 +168,7 @@ class QueuedTask extends AppModel {
 					'workerkey' => $key
 				)
 			));
-			if (is_array($data)) {
+			if (is_array($data) && !empty($data)) {
 				// if the job had an existing fetched timestamp, increment the failure counter
 				if (in_array($data[$this->name]['id'], $wasFetched)) {
 					$data[$this->name]['failed']++;
