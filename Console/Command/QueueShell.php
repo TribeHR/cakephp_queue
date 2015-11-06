@@ -359,8 +359,7 @@ class QueueShell extends Shell {
 	 */
 	private function sendToHipchat($message) {
 		$hipchatToken = 'c7cdab9bff9a7e0aae766aea345334';
-		// $hipchatRoomID = '84232'; // Scrum: TribeHR
-		$hipchatRoomID = '2124722'; // QueueMinder Test
+		$hipchatRoomID = QUEUE_MONITOR_HIPCHAT_ROOM;
 		$fromName = 'Queue Monitor';
 		$notify = 1;
 		$color = 'yellow';
