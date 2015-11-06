@@ -307,7 +307,10 @@ class QueueShell extends Shell {
 	private function writeFile($info) {
 		App::import('File');
 		$file = new File(QUEUE_MONITOR_OUTFILE);
-		$file->write('readJson(' . json_encode($info) . ")\n", $mode = 'w', $force = true);
+		if (!$file->write('readJson(' . json_encode($info) . ")\n", $mode = 'w', $force = true)) {
+			$this->out('Unable to write JSONP file.');
+			CakeLog::error('CakephpQueue Monitor: Unable to write JSONP file.');
+		}
 		$file->close();
 		$this->out('File written to: ' . QUEUE_MONITOR_OUTFILE);
 	}
@@ -328,7 +331,7 @@ class QueueShell extends Shell {
 	/**
 	 * Make sure we aren't sending the same message over and over.
 	 *
-	 * @return boolean true if we are not spamming, false if we don't want.
+	 * @return boolean true if we are not spamming, false if we do not want to send message.
 	 */
 	private function spamCheck() {
 		App::import('File');
@@ -339,13 +342,13 @@ class QueueShell extends Shell {
 				$this->out('Alert triggered, but on cooldown.');
 				return false;
 			}
-			$file->write(date('c'), $mode = 'w', $force = true);
-			return true;
-		} else {
-			$file->write(date('c'), $mode = 'w', $force = true);
+		}
+		if ($file->write(date('c'), $mode = 'w', $force = true)) {
 			return true;
 		}
-		$this->out('Something went wrong with spam protection.');
+		$this->out('Unable to write spam protection file.');
+		CakeLog::error('CakephpQueue Monitor: Unable to write spam protection file.');
+		// if we can't write to the file, we can't send the alert because we could be spamming.
 		return false;
 	}
 
@@ -415,7 +418,7 @@ class QueueShell extends Shell {
 	
 	function out($str = null, $newlines = 1, $level = Shell::NORMAL) {
 		$str = date('Y-m-d H:i:s').' '.$str;
-		return parent::out($str, $newlines, $level);
+		return parent::out($str);
 	}
 
 	function _exit($signal) {
