@@ -416,8 +416,10 @@ class QueueShell extends Shell {
 	}
 	
 	function out($str = null, $newlines = 1, $level = Shell::NORMAL) {
-		$str = date('Y-m-d H:i:s').' '.$str;
-		return parent::out($str);
+		if ($newlines > 0) {
+			$str = date('Y-m-d H:i:s').' '.$str;
+		}
+		return parent::out($str, $newlines, $level);
 	}
 
 	function _exit($signal) {
