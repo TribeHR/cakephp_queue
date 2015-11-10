@@ -10,6 +10,8 @@ declare(ticks = 1);
  */
 
 App::uses('Folder', 'Utility');
+App::uses('File', 'Utility');
+App::import('Vendor', 'Hipchat', array('file' => 'HipchatPhp/src/HipChat/HipChat.php')); 
 
 class QueueShell extends Shell {
 	public $uses = array(
@@ -27,6 +29,9 @@ class QueueShell extends Shell {
 	protected $_verbose = false;
 
 	private $exit;
+
+	const ALERT_SIZE = 100;
+	const ALERT_COOLDOWN = 1800;
 
 
 	function getOptionParser() {
@@ -250,6 +255,125 @@ class QueueShell extends Shell {
 	}
 
 	/**
+	 * Write the status of the queue out to the terminal.
+	 * @return null
+	 */
+	public function status() {
+		$info = $this->getStatus();
+		$this->out('Queue size: ' . $info['queue_size']);
+		$this->out('Last Task Completed: ' . $info['last_task_completed']);
+	}
+
+	/**
+	 * To be called periodically by a task scheduler like Cron. Writes the queue status to a file and 
+	 * sends an alert if it meets certain warning conditions.
+	 *
+	 * @return null
+	 */
+	public function statusFile() {
+		$info = $this->getStatus();
+		if ($info['status'] == 'bad') {
+			$this->sendAlert($info);
+		}
+		$this->writeFile($info);	
+	}
+
+	/**
+	 * Fetch the status from the queue database and put data in an array the different output functions can use.
+	 *
+	 * @return array Keyed array of metrics we want from the queue.
+	 */
+	private function getStatus() {
+		$info['queue_size'] = $this->QueuedTask->getPending();
+		$lastTask = $this->QueuedTask->getLastCompleted();
+		if (!empty($lastTask)) {
+			$info['last_task_completed'] = $lastTask['QueuedTask']['completed'];
+		} else {
+			$info['last_task_completed'] = null;
+		}
+		$info['status'] = 'good';
+		if ($info['queue_size'] > self::ALERT_SIZE) {
+			$info['status'] = 'bad';
+		}
+		return $info;
+	}
+
+	/**
+	 * Write the output of status() to a selected file path.
+	 * Where the file is written is defined in app/Config/bootstrap.{environment}.php
+	 *
+	 * @param array $info The values to output
+	 */
+	private function writeFile($info) {
+		App::import('File');
+		$file = new File(QUEUE_MONITOR_OUTFILE);
+		if (!$file->write('readJson(' . json_encode($info) . ")\n", $mode = 'w', $force = true)) {
+			$this->out('Unable to write JSONP file.');
+			CakeLog::error('CakephpQueue Monitor: Unable to write JSONP file.');
+		}
+		$file->close();
+		$this->out('File written to: ' . QUEUE_MONITOR_OUTFILE);
+	}
+	
+	/**
+	 * Send Alert.  This could be an email or message to HipChat.
+	 * For this version it goes to HipChat
+	 * 
+	 * @param array $info Array of queue info.
+	 */
+	private function sendAlert($info) {
+		if ($this->spamCheck()) {
+			$this->sendToHipchat(ENVIRONMENT . ' -- Queue has ' . $info['queue_size'] . ' pending items.');
+			$this->out('Alert triggered.');
+		}
+	}
+
+	/**
+	 * Make sure we aren't sending the same message over and over.
+	 *
+	 * @return boolean true if we are not spamming, false if we do not want to send message.
+	 */
+	private function spamCheck() {
+		App::import('File');
+		$file = new File('tmp/queue_last_alert.txt');
+		if ($file->exists()) {
+			$last_alert = strtotime($file->read());
+			if ((time() - $last_alert) < self::ALERT_COOLDOWN) {
+				$this->out('Alert triggered, but on cooldown.');
+				return false;
+			}
+		}
+		if ($file->write(date('c'), $mode = 'w', $force = true)) {
+			return true;
+		}
+		$this->out('Unable to write spam protection file.');
+		CakeLog::error('CakephpQueue Monitor: Unable to write spam protection file.');
+		// if we can't write to the file, we can't send the alert because we could be spamming.
+		return false;
+	}
+
+	/**
+	 * Sends the message to HipChat
+	 *
+	 * @param string The message you want to send
+	 */
+	private function sendToHipchat($message) {
+		$hipchatToken = 'c7cdab9bff9a7e0aae766aea345334';
+		$hipchatRoomID = QUEUE_MONITOR_HIPCHAT_ROOM;
+		$fromName = 'Queue Monitor';
+		$notify = 1;
+		$color = 'yellow';
+
+		$hipchatConnection = new HipChat\HipChat($hipchatToken);
+		try {
+			$result = $hipchatConnection->message_room($hipchatRoomID, $fromName, $message, $notify, $color);
+		} catch (HipChat\HipChat_Exception $e) {
+			$this->out("Failed to alert to hipchat: " . $e->getMessage());				
+			$result = false;
+		}
+	}
+
+	/**
 	 * Returns a List of available QueueTasks and their individual configurations.
 	 * @return array
 	 */
@@ -291,9 +415,11 @@ class QueueShell extends Shell {
 		}
 	}
 	
-	function out($str='') {
-		$str = date('Y-m-d H:i:s').' '.$str;
-		return parent::out($str);
+	function out($str = null, $newlines = 1, $level = Shell::NORMAL) {
+		if ($newlines > 0) {
+			$str = date('Y-m-d H:i:s').' '.$str;
+		}
+		return parent::out($str, $newlines, $level);
 	}
 
 	function _exit($signal) {
@@ -301,4 +427,4 @@ class QueueShell extends Shell {
 	}
 
 }
-?>
+
