@@ -11,7 +11,9 @@ declare(ticks = 1);
 
 App::uses('Folder', 'Utility');
 App::uses('File', 'Utility');
-App::import('Vendor', 'Hipchat', array('file' => 'HipchatPhp/src/HipChat/HipChat.php')); 
+if (!class_exists('HipChat\HipChat')) {
+	App::import('Vendor', 'Hipchat', array('file' => 'HipchatPhp/src/HipChat/HipChat.php')); 
+}
 
 class QueueShell extends Shell {
 	public $uses = array(
@@ -358,7 +360,7 @@ class QueueShell extends Shell {
 	 * @param string The message you want to send
 	 */
 	private function sendToHipchat($message) {
-		$hipchatToken = 'c7cdab9bff9a7e0aae766aea345334';
+		$hipchatToken = QUEUE_MONITOR_HIPCHAT_TOKEN;
 		$hipchatRoomID = QUEUE_MONITOR_HIPCHAT_ROOM;
 		$fromName = 'Queue Monitor';
 		$notify = 1;
@@ -368,7 +370,7 @@ class QueueShell extends Shell {
 		try {
 			$result = $hipchatConnection->message_room($hipchatRoomID, $fromName, $message, $notify, $color);
 		} catch (HipChat\HipChat_Exception $e) {
-			$this->out("Failed to alert to hipchat: " . $e->getMessage());				
+			$this->out("Failed to alert to hipchat: " . $e->getMessage());
 			$result = false;
 		}
 	}
