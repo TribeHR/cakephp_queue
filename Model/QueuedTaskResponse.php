@@ -33,7 +33,7 @@ class QueuedTaskResponse extends AppModel {
 	var $validate = array(
 		'key' => array(
 			'nonempty' => array (
-				'rule' => 'notempty',
+				'rule' => 'notBlank',
 				'required' => true,
 				'message' => 'A key must be provided',
 				),
