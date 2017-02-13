@@ -182,7 +182,12 @@ class QueueShell extends Shell {
 						$this->QueuedTask->requeueJob($data['id'], $this->getTaskConf($taskname, 'timeout'));
 						$this->out('Job could not be run, requeued.');
 					} else {
-						$return = $this->{$taskname}->run($jobData);
+						if (method_exists($this->{$taskname}, 'runTask')) {
+							$return = $this->{$taskname}->runTask($jobData);
+						} else {
+							$return = $this->{$taskname}->run($jobData);
+						}
+
 						if ($return == true) {
 							$this->QueuedTask->markJobDone($data['id']);
 							$this->out('Job Finished.');
