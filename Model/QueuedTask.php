@@ -42,7 +42,21 @@ class QueuedTask extends AppModel {
 		if ($notBefore != null) {
 			$data['notbefore'] = date('Y-m-d H:i:s', strtotime($notBefore));
 		}
-		return ($this->save($this->create($data)));
+		$createdData = $this->create($data);
+		if (defined('EMAIL_LOG_ENABLED_VALUE') && EMAIL_LOG_ENABLED_VALUE == 2) {
+			if (in_array($jobName, array('Notification', 'NotificationEmail', 'Email'))) {
+				$data = unserialize($createdData['QueuedTask']['data']);
+				$Shell = new Shell();
+				$tasks = new TaskCollection($Shell);
+
+				$task = $tasks->load('queue' . $jobName);
+				$task->run($data);
+
+				return true;
+			}
+		}
+
+		return $this->save($createdData);
 	}
 
 	/**
